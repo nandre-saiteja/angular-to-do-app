@@ -1,4 +1,5 @@
-import { NgClass, NgFor } from '@angular/common';
+import { NgClass, NgFor, CommonModule } from '@angular/common';
+import { OnInit } from '@angular/core';
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterOutlet } from '@angular/router';
@@ -12,39 +13,51 @@ export interface TodoItem {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, FormsModule, NgFor, NgClass],
+  imports: [RouterOutlet, FormsModule, NgFor, NgClass, CommonModule], // Add CommonModule
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
-  todoList : TodoItem [] = []; //array
-  newTask: string = '' //input string/task
+export class AppComponent implements OnInit { // Implement OnInit
+  todoList: TodoItem[] = [];
+  newTask: string = '';
 
-  addTask(): void{
-    if(this.newTask.trim() !== ''){ //prevents adding empty tasks, trim --> removes leading/trailing spaces from newTask
+  ngOnInit(): void {
+    this.loadTodoList();
+  }
 
-      const newTodoItem : TodoItem = {
-
+  addTask(): void {
+    if (this.newTask.trim() !== '') {
+      const newTodoItem: TodoItem = {
         id: Date.now(),
         task: this.newTask,
         completed: false
-      }
+      };
 
-      this.todoList.push(newTodoItem)
-      // console.log(this.todoList)
-      this.newTask = '' //after adding it disappears
+      this.todoList.push(newTodoItem);
+      this.saveTodoList(); // Save to session storage
+      this.newTask = '';
     }
   }
 
-  toggleCompleted(index: number): void{
-    //console.log(index)
-    this.todoList[index].completed = !this.todoList[index].completed
-    //console.log(this.todoList)
+  toggleCompleted(index: number): void {
+    this.todoList[index].completed = !this.todoList[index].completed;
+    this.saveTodoList(); // Save to session storage
   }
 
-  deleteTask(id: number):void {
-    this.todoList = this.todoList.filter(item => item.id !== id)
-    console.log(this.todoList)
+  deleteTask(id: number): void {
+    this.todoList = this.todoList.filter(item => item.id !== id);
+    this.saveTodoList(); // Save to session storage
+    console.log(this.todoList);
   }
 
+  private saveTodoList(): void {
+    sessionStorage.setItem('todoList', JSON.stringify(this.todoList));
+  }
+
+  private loadTodoList(): void {
+    const storedList = sessionStorage.getItem('todoList');
+    if (storedList) {
+      this.todoList = JSON.parse(storedList);
+    }
+  }
 }
